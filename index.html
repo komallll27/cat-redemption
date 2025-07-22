@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cat Redemption</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Courier New', monospace;
+      background: #f5e6c8;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: url('https://i.imgur.com/SNzfSMT.png') repeat;
+      image-rendering: pixelated;
+    }
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: #fff5;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div id="score">🐟 Tuna: 0 | 🧼 Lives: 3</div>
+  <canvas id="gameCanvas" width="800" height="400"></canvas>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const cat = {
+      x: 50,
+      y: 300,
+      width: 40,
+      height: 40,
+      dy: 0,
+      gravity: 1.5,
+      jumpPower: -15,
+      grounded: true
+    };
+
+    let tuna = { x: 800, y: 300 };
+    let water = { x: 1200, y: 300 };
+    let score = 0;
+    let lives = 3;
+
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space' && cat.grounded) {
+        cat.dy = cat.jumpPower;
+        cat.grounded = false;
+      }
+    });
+
+    function drawCat() {
+      ctx.fillStyle = 'orange';
+      ctx.fillRect(cat.x, cat.y, cat.width, cat.height);
+    }
+
+    function drawTuna() {
+      ctx.fillStyle = 'blue';
+      ctx.fillRect(tuna.x, tuna.y, 20, 20);
+    }
+
+    function drawWater() {
+      ctx.fillStyle = 'lightblue';
+      ctx.fillRect(water.x, water.y, 30, 30);
+    }
+
+    function update() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Physics
+      cat.dy += cat.gravity;
+      cat.y += cat.dy;
+
+      if (cat.y > 300) {
+        cat.y = 300;
+        cat.dy = 0;
+        cat.grounded = true;
+      }
+
+      // Move tuna and water
+      tuna.x -= 5;
+      water.x -= 6;
+
+      // Respawn
+      if (tuna.x < -20) tuna.x = 800 + Math.random() * 200;
+      if (water.x < -30) water.x = 1000 + Math.random() * 300;
+
+      // Collision
+      if (cat.x < tuna.x + 20 && cat.x + cat.width > tuna.x &&
+          cat.y < tuna.y + 20 && cat.y + cat.height > tuna.y) {
+        score++;
+        tuna.x = 800 + Math.random() * 200;
+      }
+
+      if (cat.x < water.x + 30 && cat.x + cat.width > water.x &&
+          cat.y < water.y + 30 && cat.y + cat.height > water.y) {
+        lives--;
+        water.x = 1000 + Math.random() * 300;
+      }
+
+      drawCat();
+      drawTuna();
+      drawWater();
+
+      document.getElementById('score').textContent = 🐟 Tuna: ${score} | 🧼 Lives: ${lives};
+
+      if (lives <= 0) {
+        alert('You lost all your lives! Reload to play again.');
+        location.reload();
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    update();
+  </script>
+</body>
+</html>
