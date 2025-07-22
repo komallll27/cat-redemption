@@ -30,9 +30,19 @@
 <body>
   <div id="score">🐟 Tuna: 0 | 🧼 Lives: 3</div>
   <canvas id="gameCanvas" width="800" height="400"></canvas>
+
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
+
+    const catImg = new Image();
+    catImg.src = 'cowboy-cat.png';
+
+    const tunaImg = new Image();
+    tunaImg.src = 'tuna.png';
+
+    const waterImg = new Image();
+    waterImg.src = 'soap.png';
 
     const cat = {
       x: 50,
@@ -58,18 +68,15 @@
     });
 
     function drawCat() {
-      ctx.fillStyle = 'orange';
-      ctx.fillRect(cat.x, cat.y, cat.width, cat.height);
+      ctx.drawImage(catImg, cat.x, cat.y, cat.width, cat.height);
     }
 
     function drawTuna() {
-      ctx.fillStyle = 'blue';
-      ctx.fillRect(tuna.x, tuna.y, 20, 20);
+      ctx.drawImage(tunaImg, tuna.x, tuna.y, 20, 20);
     }
 
     function drawWater() {
-      ctx.fillStyle = 'lightblue';
-      ctx.fillRect(water.x, water.y, 30, 30);
+      ctx.drawImage(waterImg, water.x, water.y, 30, 30);
     }
 
     function update() {
@@ -110,10 +117,10 @@
       drawTuna();
       drawWater();
 
-      document.getElementById('score').textContent = 🐟 Tuna: ${score} | 🧼 Lives: ${lives};
+      document.getElementById('score').textContent = `🐟 Tuna: ${score} | 🧼 Lives: ${lives}`;
 
       if (lives <= 0) {
-        alert('You lost all your lives! Reload to play again.');
+        alert('Partner… you ran outta lives. Reload to play again.');
         location.reload();
       }
 
@@ -124,3 +131,4 @@
   </script>
 </body>
 </html>
+
