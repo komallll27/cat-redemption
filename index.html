@@ -6,129 +6,271 @@
   <style>
     body {
       margin: 0;
-      font-family: 'Courier New', monospace;
-      background: #f5e6c8;
-      overflow: hidden;
+      padding: 20px;
+      text-align: center;
+      background-color: #ffe4c4;
+      font-family: 'Comic Sans MS', cursive;
     }
+
     canvas {
-      display: block;
-      margin: 0 auto;
-      background: url('Unity Asset Store.jpg') repeat;
-      image-rendering: pixelated;
+      background: #a29bfe;
+      border: 8px dashed hotpink;
     }
-    #score {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: #fff5;
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 18px;
+
+    #scoreBoard {
+      font-size: 24px;
+      color: #2d3436;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    #message {
+      font-size: 20px;
+      color: red;
+      font-weight: bold;
+      margin: 10px;
+    }
+
+    #lives {
+      font-size: 22px;
+      color: crimson;
     }
   </style>
 </head>
 <body>
-  <div id="score">🐟 Tuna: 0 | 🧼 Lives: 3</div>
+  <h1>🐱 Cat Redemption</h1>
+  <div id="scoreBoard">Score: 0</div>
+  <div id="lives">Lives: 3</div>
+  <div id="message">Use Arrow Keys to Move the Cat 🐾</div>
   <canvas id="gameCanvas" width="800" height="400"></canvas>
 
-  <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+<script>
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+  const scoreBoard = document.getElementById("scoreBoard");
+  const livesBoard = document.getElementById("lives");
+  const messageBox = document.getElementById("message");
 
-    const catImg = new Image();
-    catImg.src = 'cowboy-cat.png';
+  const catImg = new Image();
+  catImg.src = "cat.png"; // Make sure this file is in the same folder
 
-    const tunaImg = new Image();
-    tunaImg.src = 'tuna.png';
+  const cat = { x: 50, y: 300, width: 50, height: 50, speed: 10 };
+  const fish = { x: rand(750), y: rand(370), width: 30, height: 30 };
+  const goldenFish = { x: rand(750), y: rand(370), width: 30, height: 30, visible: false, timer: 0 };
+  const dog = { x: 0, y: 200, width: 40, height: 40, speed: 3, dir: 1 };
+  const enemies = [];
 
-    const waterImg = new Image();
-    waterImg.src = 'soap.png';
-
-    const cat = {
-      x: 50,
-      y: 300,
+  for (let i = 0; i < 3; i++) {
+    enemies.push({
+      x: Math.random() * (canvas.width - 40),
+      y: Math.random() * (canvas.height - 40),
       width: 40,
       height: 40,
-      dy: 0,
-      gravity: 1.5,
-      jumpPower: -15,
-      grounded: true
-    };
+      speedX: (Math.random() - 0.5) * 4,
+      speedY: (Math.random() - 0.5) * 4
+    });
+  }
 
-    let tuna = { x: 800, y: 300 };
-    let water = { x: 1200, y: 300 };
-    let score = 0;
-    let lives = 3;
+  let score = 0;
+  let lives = 3;
+  let dogMessageTimer = 0;
+  let gameOver = false;
 
-    document.addEventListener('keydown', e => {
-      if (e.code === 'Space' && cat.grounded) {
-        cat.dy = cat.jumpPower;
-        cat.grounded = false;
+  function rand(limit) {
+    return Math.random() * limit;
+  }
+
+  function drawCat() {
+    ctx.drawImage(catImg, cat.x, cat.y, cat.width, cat.height);
+  }
+
+  function drawFish() {
+    ctx.font = "30px Arial";
+    ctx.fillText("🐟", fish.x, fish.y);
+  }
+
+  function drawGoldenFish() {
+    if (goldenFish.visible) {
+      ctx.font = "30px Arial";
+      ctx.fillText("🐠", goldenFish.x, goldenFish.y);
+    }
+  }
+
+  function drawEnemies() {
+    ctx.font = "40px Arial";
+    enemies.forEach(enemy => {
+      ctx.fillText("🐶", enemy.x, enemy.y);
+    });
+    ctx.fillText("🐶", dog.x, dog.y);
+  }
+
+  function moveEnemies() {
+    enemies.forEach(enemy => {
+      enemy.x += enemy.speedX;
+      enemy.y += enemy.speedY;
+
+      if (enemy.x <= 0 || enemy.x + enemy.width >= canvas.width) {
+        enemy.speedX *= -1;
+      }
+      if (enemy.y <= 0 || enemy.y + enemy.height >= canvas.height) {
+        enemy.speedY *= -1;
+      }
+    });
+  }
+
+  function update() {
+    if (gameOver) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawFish();
+    drawGoldenFish();
+    drawEnemies();
+    moveEnemies();
+    drawCat();
+    checkCollisions();
+    moveDog();
+    updateGoldenFish();
+    updateMessage();
+
+    if (dogMessageTimer > 0) {
+      dogMessageTimer--;
+    } else {
+      messageBox.textContent = "";
+    }
+  }
+
+  function checkCollisions() {
+    // Dog patrol (side-scrolling one)
+    if (isColliding(cat, dog)) {
+      loseLife("🐶 Woof! You lost a life!");
+    }
+
+    // Bouncing enemies
+    enemies.forEach(enemy => {
+      if (isColliding(cat, enemy)) {
+        loseLife("🐶 Woof! You lost a life!");
       }
     });
 
-    function drawCat() {
-      ctx.drawImage(catImg, cat.x, cat.y, cat.width, cat.height);
+    if (isColliding(cat, fish)) {
+      score++;
+      fish.x = rand(750);
+      fish.y = rand(370);
+      scoreBoard.textContent = "Score: " + score;
     }
 
-    function drawTuna() {
-      ctx.drawImage(tunaImg, tuna.x, tuna.y, 20, 20);
+    if (goldenFish.visible && isColliding(cat, goldenFish)) {
+      score += 5;
+      scoreBoard.textContent = "Score: " + score;
+      goldenFish.visible = false;
+      goldenFish.timer = 0;
     }
+  }
 
-    function drawWater() {
-      ctx.drawImage(waterImg, water.x, water.y, 30, 30);
-    }
-
-    function update() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Physics
-      cat.dy += cat.gravity;
-      cat.y += cat.dy;
-
-      if (cat.y > 300) {
-        cat.y = 300;
-        cat.dy = 0;
-        cat.grounded = true;
-      }
-
-      // Move tuna and water
-      tuna.x -= 5;
-      water.x -= 6;
-
-      // Respawn
-      if (tuna.x < -20) tuna.x = 800 + Math.random() * 200;
-      if (water.x < -30) water.x = 1000 + Math.random() * 300;
-
-      // Collision
-      if (cat.x < tuna.x + 20 && cat.x + cat.width > tuna.x &&
-          cat.y < tuna.y + 20 && cat.y + cat.height > tuna.y) {
-        score++;
-        tuna.x = 800 + Math.random() * 200;
-      }
-
-      if (cat.x < water.x + 30 && cat.x + cat.width > water.x &&
-          cat.y < water.y + 30 && cat.y + cat.height > water.y) {
-        lives--;
-        water.x = 1000 + Math.random() * 300;
-      }
-
-      drawCat();
-      drawTuna();
-      drawWater();
-
-      document.getElementById('score').textContent = `🐟 Tuna: ${score} | 🧼 Lives: ${lives}`;
+  function loseLife(message) {
+    if (dogMessageTimer === 0) {
+      lives--;
+      livesBoard.textContent = "Lives: " + lives;
+      messageBox.textContent = message;
+      dogMessageTimer = 60;
 
       if (lives <= 0) {
-        alert('Partner… you ran outta lives. Reload to play again.');
-        location.reload();
+        messageBox.textContent = "💀 Game Over! Press R to Restart";
+        gameOver = true;
       }
+    }
+  }
 
-      requestAnimationFrame(update);
+  function isColliding(a, b) {
+    return (
+      a.x < b.x + b.width &&
+      a.x + a.width > b.x &&
+      a.y < b.y + b.height &&
+      a.y + a.height > b.y
+    );
+  }
+
+  function moveDog() {
+    dog.x += dog.speed * dog.dir;
+    if (dog.x <= 0 || dog.x + dog.width >= canvas.width) {
+      dog.dir *= -1;
+    }
+  }
+
+  function updateGoldenFish() {
+    goldenFish.timer++;
+    if (goldenFish.timer > 500 && !goldenFish.visible) {
+      goldenFish.visible = true;
+      goldenFish.x = rand(750);
+      goldenFish.y = rand(370);
+    }
+    if (goldenFish.timer > 1000) {
+      goldenFish.visible = false;
+      goldenFish.timer = 0;
+    }
+  }
+
+ function updateMessage() {
+  if (score === 1) {
+    messageBox.textContent = "🎣 First catch! Fishy business begins!";
+  } else if (score === 8) {
+    messageBox.textContent = "😺 You're getting the hang of it!";
+  } else if (score === 16) {
+    messageBox.textContent = "🐾 You’re paws-itively fishy!";
+  } else if (score === 24) {
+    messageBox.textContent = "😼 Look at you go, lil hunter!";
+  } else if (score === 36) {
+    messageBox.textContent = "✨ You're a purrfessional fishercat!";
+  } else if (score === 60) {
+    messageBox.textContent = "🎊 You're swimming in success!";
+  } else if (score === 81) {
+    messageBox.textContent = "🏆 CAT REDEMPTION COMPLETE!";
+  }
+}
+
+
+  document.addEventListener("keydown", function (e) {
+    if (gameOver && e.key === "r") {
+      resetGame();
+      return;
     }
 
-    update();
-  </script>
+    if (!gameOver) {
+      switch (e.key) {
+        case "ArrowUp":
+          cat.y = Math.max(0, cat.y - cat.speed);
+          break;
+        case "ArrowDown":
+          cat.y = Math.min(canvas.height - cat.height, cat.y + cat.speed);
+          break;
+        case "ArrowLeft":
+          cat.x = Math.max(0, cat.x - cat.speed);
+          break;
+        case "ArrowRight":
+          cat.x = Math.min(canvas.width - cat.width, cat.x + cat.speed);
+          break;
+      }
+    }
+  });
+
+  function resetGame() {
+    score = 0;
+    lives = 3;
+    gameOver = false;
+    fish.x = rand(750);
+    fish.y = rand(370);
+    goldenFish.visible = false;
+    goldenFish.timer = 0;
+    cat.x = 50;
+    cat.y = 300;
+    scoreBoard.textContent = "Score: 0";
+    livesBoard.textContent = "Lives: 3";
+    messageBox.textContent = "";
+  }
+
+  catImg.onload = function () {
+    setInterval(update, 30);
+  };
+</script>
 </body>
 </html>
-
