@@ -11,12 +11,39 @@
       background-color: #ffe4c4;
       font-family: 'Comic Sans MS', cursive;
     }
-
+controls {
+      margin-top: 10px;
+    }
     canvas {
       background: #a29bfe;
       border: 8px dashed hotpink;
     }
+  .arrow-button {
+      font-size: 24px;
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      background-color: #ffe6a7;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    }
 
+    .arrow-button:hover {
+      background-color: #ffcc66;
+    }
+
+    .arrow-grid {
+      display: inline-grid;
+      grid-template-columns: auto auto auto;
+      gap: 5px;
+      justify-content: center;
+    }
+
+    .arrow-grid button {
+      width: 60px;
+      height: 60px;
+    }
     #scoreBoard {
       font-size: 24px;
       color: #2d3436;
